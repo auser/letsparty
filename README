@@ -1,13 +1,16 @@
 # letsparty
 
-FIXME: write description
+Event system for clojure
 
 ## Usage
+    
+    (listen :ari (fn [msg] (deliver prom1 msg)))
+    (publish :ari "boop")
 
-FIXME: write
+It's that easy!
 
 ## License
 
-Copyright (C) 2010 FIXME
+Copyright (C) 2010 Ari Lerner
 
 Distributed under the Eclipse Public License, the same as Clojure.
