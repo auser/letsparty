@@ -1,4 +1,10 @@
 (ns letsparty
+  #^{:author "Ari Lerner"}
+  "Let's party is a simple, but powerful event system. It's distributed using the
+  very cool and well designed in-memory data grid: Hazelcast
+  
+  This file contains the exposed public api
+  "
   (:require [letsparty.core :as core]))
 
 (defn listen 
