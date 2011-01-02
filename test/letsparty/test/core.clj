@@ -61,6 +61,16 @@
         (is (= "boop" @prom2))
       )
     )
+    (testing "setting a listen hander with a function reference"
+      (let [
+          prom1 (promise)
+          hfun (fn [msg] (deliver prom1 msg))
+        ]
+        (listen "ducks" hfun)
+        (publish "ducks" "hello world")
+        (is (= "hello world" @prom1))
+      )
+    )
     (testing "unlistening"
       (let [
           prom1 (promise)
