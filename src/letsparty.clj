@@ -8,14 +8,23 @@
 
 (defn listen 
   {:doc "Listen for messages"}
+  ([handler] (apply core/listen [handler]))
   ([key handler] (apply core/listen [key handler])))
+
+(defn listen-once
+  {:doc "Listen for messages only one time"}
+  ([handler] (apply core/listen-once [handler]))
+  ([key handler] (apply core/listen-once [key handler])))
+
 
 (defn publish 
   {:doc "Publish a message to the events queue"}
+  ([msg] (apply core/publish [msg]))
   ([key msg] (apply core/publish [key msg])))
 
 (defn unlisten 
   {:doc "Unlisten a handler"}
+  ([handler] (apply core/unlisten [handler]))
   ([key handler] (apply core/unlisten [key handler])))
 
 (defn pause 

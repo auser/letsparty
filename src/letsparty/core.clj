@@ -21,13 +21,20 @@
 ;; Push
 (defn publish 
   {:doc "Publish a message to the events queue"}
-  ([key msg] (.put *main-event-notification-queue* {:key (keyword key) :data msg})
+  ([msg] (.put *main-event-notification-queue*      {:key :all :data msg}))
+  ([key msg] (.put *main-event-notification-queue*  {:key (keyword key) :data msg})
   )
 )
 
 ;; Listen for messages
-(defn listen 
+(defn listen
   {:doc "Listen for messages"}
+  ([handler]
+    (dosync
+      (if (get @*events-handlers* :all) 
+        (swap! *events-handlers* (fn [table] (assoc table :all (conj (get table :all) handler))))
+        (swap! *events-handlers* (fn [table] (assoc table :all [handler]))))
+    ))
   ([key handler]
     (let [key (keyword key)]
       (dosync
@@ -39,8 +46,32 @@
     )
 )
 
+(defn listen-once
+  {:doc "Listen for messages only once"}
+  ([handler]
+    (dosync
+      (if (get @*events-handlers* :all) 
+        (swap! *events-handlers* (fn [table] (assoc table :all (conj (get table :all) (with-meta handler {:once true})))))
+        (swap! *events-handlers* (fn [table] (assoc table :all [(with-meta handler {:once true})]))))
+    ))
+  ([key handler]
+    (let [key (keyword key)]
+      (dosync
+        (if (get @*events-handlers* key)
+          (swap! *events-handlers* (fn [table] (assoc table key (conj (get table key) (with-meta handler {:once true})))))
+          (swap! *events-handlers* (fn [table] (assoc table key [(with-meta handler {:once true})])))
+        ))
+      handler)
+    )
+)
+
 (defn unlisten 
   {:doc "Unlisten a handler"}
+  ([handler]
+    (when (get @*events-handlers* :all)
+    (swap! *events-handlers*
+      (fn [table] (let [old-handlers (get table :all)
+                        new-handlers (filter #(not = %1 handler) old-handlers)] (assoc table :all new-handlers))))))
   ([key handler] 
     (let [key (keyword key)]
     (when (get @*events-handlers* key)
@@ -95,7 +126,7 @@
           (try
             (apply handler [msg])
           (catch Exception ex
-            (log :error (str "Error with process: " (.getMessage ex) " " (vec (.getStackTrace ex))))
+            (log :debug (str "Error with process: " (.getMessage ex) " " (vec (.getStackTrace ex))))
           )))
         (clear-listen-once-handlers this-event-handlers key)
       )
