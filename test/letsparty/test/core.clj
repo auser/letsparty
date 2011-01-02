@@ -1,0 +1,76 @@
+(ns letsparty.test.core
+  (:use [letsparty.core] :reload)
+  (:use [clojure.test]))
+
+(start-events-system 1)
+
+(deftest event-system
+  (testing "events"
+    (testing "publishing with a listener"
+      (let [prom1 (promise)]
+        (listen :initial-listen (fn [msg] (deliver prom1 msg)))
+        (publish :initial-listen "hello world")
+        (is (= "hello world" @prom1))
+      )
+    )
+    (testing "publishing without a listener"
+      (let [prom1 (promise) prom2 (promise)]
+        (listen  :pancakes (fn [msg] (deliver prom1 msg)))
+        (publish :ducks "hello ducks")
+        (publish :pancakes "hello world")
+        (is (= "hello world" @prom1))
+      )
+    )
+    (testing "pausing queue flow"
+      (let [
+          prom1 (promise)
+          prom2 (promise)
+          x (ref nil)
+          y (ref nil)
+        ]
+        (listen :car (fn [msg] (dosync (alter x (fn [_] msg)) (deliver prom1 "yes"))))
+        (listen :bikes (fn [msg] (dosync (alter y (fn [_] msg)) (deliver prom2 "yes"))))
+        
+        (publish :car {:action "start the car"})
+        @prom1
+        (pause)
+        (publish :bikes {:action "start the pedals"})
+        (is (= @x {:action "start the car"}))
+        (is (= @y nil))
+        (ready)
+        @prom2
+        (is (= @y {:action "start the pedals"}))
+      )
+    )
+    (testing "multiple listen handlers"
+      (let [
+          prom1 (promise)
+          prom2 (promise)
+          handler1 (listen :ncaa (fn [msg] (deliver prom1 msg)))
+          handler2 (listen :ncaa (fn [msg] (deliver prom2 msg)))
+        ]
+        (publish :ncaa "boop")
+        (is (= "boop" @prom1))
+        (is (= "boop" @prom2))
+      )
+    )
+    (testing "unlistening"
+      (let [
+          prom1 (promise)
+          prom2 (promise)
+          x (ref nil)
+          handler1 (listen :cart (fn [msg] (dosync (alter x (fn [_] "first"))) (deliver prom1 msg)))
+          handler2 (listen :cart (fn [msg] (dosync (alter x (fn [_] "second")))))
+          handler3 (listen :goahead (fn [msg] (deliver prom2 msg)))
+        ]
+        
+        (unlisten :cart handler2)
+        (publish :goahead "Bob Stoops")
+        (is (= "Bob Stoops" @prom2))
+        (publish :cart "message")
+        (is (= "message" @prom1))
+        (is (= @x "first"))
+      )
+    )
+  )
+)
