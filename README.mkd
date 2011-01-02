@@ -4,6 +4,7 @@ Distributed event system for clojure using Hazelcast
 
 ## Usage
     
+    (start-events-system)
     (listen :ari (fn [msg] (deliver prom1 msg)))
     (publish :ari "boop")
 
