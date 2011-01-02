@@ -1,6 +1,6 @@
 # letsparty
 
-Event system for clojure
+Distributed event system for clojure using Hazelcast
 
 ## Usage
     
