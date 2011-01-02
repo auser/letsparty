@@ -1,5 +1,5 @@
 (ns letsparty.test.core
-  (:use [letsparty.core] :reload)
+  (:use [letsparty] :reload)
   (:use [clojure.test]))
 
 (start-events-system 1)

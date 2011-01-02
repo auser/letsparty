@@ -73,7 +73,7 @@
   "Pauses events-dispatcher-thread and halts action"
   ([] (dosync (alter should-read-global-queue (fn [_] true)))))
 
-(defn clear-listen-once-handlers
+(defn- clear-listen-once-handlers
   "Clearn all the handlers that have the meta-data of {:once true}"
   ([events-handlers key]
     (let [key (keyword key)]
