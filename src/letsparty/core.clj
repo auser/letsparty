@@ -21,7 +21,7 @@
 ;; Push
 (defn publish 
   {:doc "Publish a message to the events queue"}
-  ([key msg] (.put *main-event-notification-queue* {:key key :data msg})
+  ([key msg] (.put *main-event-notification-queue* {:key (keyword key) :data msg})
   )
 )
 
@@ -29,22 +29,25 @@
 (defn listen 
   {:doc "Listen for messages"}
   ([key handler]
-    (dosync
-      (if (get @*events-handlers* key)
-        (swap! *events-handlers* (fn [table] (assoc table key (conj (get table key) handler))))
-        (swap! *events-handlers* (fn [table] (assoc table key [handler])))
-      ))
-    handler)
+    (let [key (keyword key)]
+      (dosync
+        (if (get @*events-handlers* key)
+          (swap! *events-handlers* (fn [table] (assoc table key (conj (get table key) handler))))
+          (swap! *events-handlers* (fn [table] (assoc table key [handler])))
+        ))
+      handler)
+    )
 )
 
 (defn unlisten 
   {:doc "Unlisten a handler"}
   ([key handler] 
+    (let [key (keyword key)]
     (when (get @*events-handlers* key)
       (swap! *events-handlers*
         (fn [table] (let [old-handlers (get table key) 
                           new-handlers (filter #(not= %1 handler) old-handlers)] (assoc table key new-handlers))))
-  ))
+  )))
 )
 
 ;; Pull event messages
@@ -73,9 +76,10 @@
 (defn clear-listen-once-handlers
   "Clearn all the handlers that have the meta-data of {:once true}"
   ([events-handlers key]
-     (let [handlers (get @*events-handlers* key)
-           new-handlers-without-once (filter (fn [h]  (not (:once (meta h)))) handlers)]
-       (swap! *events-handlers* (fn [new-handlers] (assoc new-handlers key new-handlers-without-once)))))
+    (let [key (keyword key)]
+      (let [handlers (get @*events-handlers* key)
+            new-handlers-without-once (filter (fn [h]  (not (:once (meta h)))) handlers)]
+      (swap! *events-handlers* (fn [new-handlers] (assoc new-handlers key new-handlers-without-once))))))
 )
 
 (defn- local-events-queue
@@ -84,7 +88,7 @@
         "}
   ([]
     (loop [msg (.take *local-events-queue*)]
-      (let  [ key (:key msg)
+      (let  [ key (keyword (:key msg))
               this-event-handlers (get @*events-handlers* key)
             ]
         (doseq [handler this-event-handlers]

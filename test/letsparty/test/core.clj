@@ -13,6 +13,13 @@
         (is (= "hello world" @prom1))
       )
     )
+    (testing "publishing with a string"
+      (let [prom1 (promise)]
+        (listen "string-listen" (fn [msg] (deliver prom1 msg)))
+        (publish "string-listen" "hello world")
+        (is (= "hello world" @prom1))
+      )
+    )
     (testing "publishing without a listener"
       (let [prom1 (promise) prom2 (promise)]
         (listen  :pancakes (fn [msg] (deliver prom1 msg)))
@@ -32,8 +39,8 @@
         (listen :bikes (fn [msg] (dosync (alter y (fn [_] msg)) (deliver prom2 "yes"))))
         
         (publish :car {:action "start the car"})
-        @prom1
         (pause)
+        @prom1
         (publish :bikes {:action "start the pedals"})
         (is (= @x {:action "start the car"}))
         (is (= @y nil))
