@@ -93,7 +93,7 @@
             ]
         (doseq [handler this-event-handlers]
           (try
-            (apply handler [(:data msg)])
+            (apply handler [msg])
           (catch Exception ex
             (log :error (str "Error with process: " (.getMessage ex) " " (vec (.getStackTrace ex))))
           )))

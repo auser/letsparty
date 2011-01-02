@@ -10,14 +10,14 @@
       (let [prom1 (promise)]
         (listen :initial-listen (fn [msg] (deliver prom1 msg)))
         (publish :initial-listen "hello world")
-        (is (= "hello world" @prom1))
+        (is (= "hello world" (:data @prom1)))
       )
     )
     (testing "publishing with a string"
       (let [prom1 (promise)]
         (listen "string-listen" (fn [msg] (deliver prom1 msg)))
         (publish "string-listen" "hello world")
-        (is (= "hello world" @prom1))
+        (is (= "hello world" (:data @prom1)))
       )
     )
     (testing "publishing without a listener"
@@ -25,7 +25,7 @@
         (listen  :pancakes (fn [msg] (deliver prom1 msg)))
         (publish :ducks "hello ducks")
         (publish :pancakes "hello world")
-        (is (= "hello world" @prom1))
+        (is (= "hello world" (:data @prom1)))
       )
     )
     (testing "pausing queue flow"
@@ -35,8 +35,8 @@
           x (ref nil)
           y (ref nil)
         ]
-        (listen :car (fn [msg] (dosync (alter x (fn [_] msg)) (deliver prom1 "yes"))))
-        (listen :bikes (fn [msg] (dosync (alter y (fn [_] msg)) (deliver prom2 "yes"))))
+        (listen :car (fn [msg] (dosync (alter x (fn [_] (:data msg))) (deliver prom1 "yes"))))
+        (listen :bikes (fn [msg] (dosync (alter y (fn [_] (:data msg))) (deliver prom2 "yes"))))
         
         (publish :car {:action "start the car"})
         (pause)
@@ -57,8 +57,8 @@
           handler2 (listen :ncaa (fn [msg] (deliver prom2 msg)))
         ]
         (publish :ncaa "boop")
-        (is (= "boop" @prom1))
-        (is (= "boop" @prom2))
+        (is (= "boop" (:data @prom1)))
+        (is (= "boop" (:data @prom2)))
       )
     )
     (testing "setting a listen hander with a function reference"
@@ -68,7 +68,7 @@
         ]
         (listen "ducks" hfun)
         (publish "ducks" "hello world")
-        (is (= "hello world" @prom1))
+        (is (= "hello world" (:data @prom1)))
       )
     )
     (testing "unlistening"
@@ -83,9 +83,9 @@
         
         (unlisten :cart handler2)
         (publish :goahead "Bob Stoops")
-        (is (= "Bob Stoops" @prom2))
+        (is (= "Bob Stoops" (:data @prom2)))
         (publish :cart "message")
-        (is (= "message" @prom1))
+        (is (= "message" (:data @prom1)))
         (is (= @x "first"))
       )
     )
